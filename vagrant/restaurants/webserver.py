@@ -2,6 +2,7 @@
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+#Will process reauest from http://localhost:8080/hello
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
