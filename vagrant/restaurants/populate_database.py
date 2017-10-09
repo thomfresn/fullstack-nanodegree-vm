@@ -11,6 +11,6 @@ myFirstRestaurant = Restaurant(name = "Pizza Palace")
 session.add(myFirstRestaurant)
 session.commit()
 
-cheezePizza = MenuItem(name = "Margarita", description = "La famosa Margarita", course = "Entree", price = "8.99€", Restaurant = myFirstRestaurant)
+cheezePizza = MenuItem(name = "Margarita", description = "La famosa Margarita", course = "Entree", price = "8.99€", restaurant = myFirstRestaurant)
 session.add(cheezePizza)
 session.commit()

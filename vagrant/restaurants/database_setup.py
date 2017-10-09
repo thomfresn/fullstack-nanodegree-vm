@@ -25,7 +25,7 @@ class MenuItem(Base):
     description = Column(String(250))
     price = Column(String(8))
     restaurant_id = Column(Integer, ForeignKey('restaurant.id'))
-    Restaurant = relationship(Restaurant)
+    restaurant = relationship(Restaurant)
 
 ##### end of the file ##########
 
