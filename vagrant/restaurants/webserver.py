@@ -38,9 +38,9 @@ class webserverHandler(BaseHTTPRequestHandler):
                 restaurants = session.query(Restaurant).all()
                 for restaurant in restaurants:
                     output += "<div>"
-                    output += "<h2>"
+                    output += "<a href='editRestaurant'>"
                     output += restaurant.name
-                    output += "</h2>"
+                    output += "</a>"
                     output += "</div>"
                 output += "</body></html>"
                 self.wfile.write(output.encode("utf-8"))
