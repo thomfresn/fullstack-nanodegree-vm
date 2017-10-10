@@ -16,6 +16,36 @@ import cgi
 class webserverHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
+
+            if self.path.endswith("/new"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html', )
+                self.end_headers()
+                output = ""
+                output += "<html><body>"
+                output += "<h1>Enter a new restaurant!</h1>"
+                output += '''<form method='POST' enctype='multipart/form-data' action='/new'><h2>New restaurant name</h2><input name="restaurantName" type="text" ><input type="submit" value="Submit"> </form>'''
+                output += "</body></html>"
+                self.wfile.write(output.encode("utf-8"))
+                print(output)
+                return
+
+            if self.path.endswith("/edit"):
+                restaurantId = self.path.split("/")[2]
+                restaurantName = session.query(Restaurant).filter_by(id = restaurantId).one().name
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html', )
+                self.end_headers()
+                output = ""
+                output += "<html><body>"
+                output += "<h1>Edit restaurant %s</h1>" % restaurantName
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/%s/edit'>" % restaurantId
+                output += "<h2>Edit restaurant name</h2><input name='newRestaurantName' type='text' ><input type='submit' value='Submit'> </form>"
+                output += "</body></html>"
+                self.wfile.write(output.encode("utf-8"))
+                print(output)
+                return
+
             if self.path.endswith("/restaurants"):
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html', )
@@ -25,54 +55,67 @@ class webserverHandler(BaseHTTPRequestHandler):
                 restaurants = session.query(Restaurant).all()
                 for restaurant in restaurants:
                     output += "<div>"
-                    output += "<a href='editRestaurant'>"
                     output += restaurant.name
+                    output += "<br>"
+                    output += "<a href='./restaurant/%s/edit'>" % restaurant.id
+                    output += "Edit restaurant name"
                     output += "</a>"
+                    output += "<br>"
+                    output += "<a href='./restaurant/%s/delete'>" % restaurant.id
+                    output += "Delete restaurant"
+                    output += "</a>"
+                    output += "<br>"
                     output += "</div>"
-                output += "</body></html>"
-                self.wfile.write(output.encode("utf-8"))
-                print(output)
-                return
-
-            if self.path.endswith("/restaurants/new"):
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html', )
-                self.end_headers()
-                output = ""
-                output += "<html><body>"
-                output += "<h1>Enter a new restaurant!</h1>"
-                output += '''<form method='POST' enctype='multipart/form-data' action='/hello'><h2>New restaurant name</h2><input name="restaurantName" type="text" ><input type="submit" value="Submit"> </form>'''
-                output += "</body></html>"
+                    output += "</body></html>"
                 self.wfile.write(output.encode("utf-8"))
                 print(output)
                 return
 
         except IOError:
-            self.send_error(404, "File not found %s" % self.path)
+                self.send_error(404, "File not found %s" % self.path)
 
     def do_POST(self):
         try:
-            self.send_response(301)
-            self.send_header('Content-type', 'text/html')
-            self.end_headers()
-            ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
-            if ctype == 'multipart/form-data':
-                pdict['boundary'] = bytes(pdict['boundary'], 'utf-8')
-                fields = cgi.parse_multipart(self.rfile, pdict)
-                restaurantName = fields.get('restaurantName')[0].decode('utf-8')
-                newRestaurant = Restaurant(name = restaurantName)
-                session.add(newRestaurant)
-                session.commit()
+                if self.path.endswith("/new"):
+                    ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
+                    if ctype == 'multipart/form-data':
+                        pdict['boundary'] = bytes(pdict['boundary'], 'utf-8')
+                        fields = cgi.parse_multipart(self.rfile, pdict)
+                        restaurantName = fields.get('newRestaurantName')[0].decode('utf-8')
+                        newRestaurant = Restaurant(name = restaurantName)
+                        session.add(newRestaurant)
+                        session.commit()
 
-                output = ''
-                output += '<html><body>'
-                output += '<h2> New restaurant created: </h2>'
-                output += '<h1> %s </h1>' % restaurantName
-                output += '</html></body>'
-                self.wfile.write(output.encode('utf-8'))
-                print(output)
+                        self.send_response(301)
+                        self.send_header('Content-type', 'text/html')
+                        self.send_header('Location', '/restaurants')
+                        self.end_headers()
+
+                        self.wfile.write(output.encode('utf-8'))
+                        print(output)
+
+                if self.path.endswith("/edit"):
+                    ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
+                    if ctype == 'multipart/form-data':
+                        pdict['boundary'] = bytes(pdict['boundary'], 'utf-8')
+                        fields = cgi.parse_multipart(self.rfile, pdict)
+                        restaurantName = fields.get('newRestaurantName')[0].decode('utf-8')
+
+                        restaurantId = self.path.split("/")[2]
+                        restaurant = session.query(Restaurant).filter_by(id = restaurantId).one()
+                        restaurant.name = restaurantName
+                        session.add(restaurant)
+                        session.commit()
+
+                        self.send_response(301)
+                        self.send_header('Content-type', 'text/html')
+                        self.send_header('Location', '/restaurants')
+                        self.end_headers()
+
+                        self.wfile.write(output.encode('utf-8'))
+                        print(output)
         except:
-                pass
+            pass
 
 def main():
     try:
