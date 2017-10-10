@@ -30,6 +30,22 @@ class webserverHandler(BaseHTTPRequestHandler):
                 print(output)
                 return
 
+            if self.path.endswith("/delete"):
+                restaurantId = self.path.split("/")[2]
+                restaurantName = session.query(Restaurant).filter_by(id = restaurantId).one().name
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html', )
+                self.end_headers()
+                output = ""
+                output += "<html><body>"
+                output += "<h1>Delete %s?</h1>" % restaurantName
+                output += "<form method='POST' enctype='multipart/form-data' action='/restaurants/%s/delete'>" % restaurantId
+                output += "<input type='submit' value='Confirm'> </form>"
+                output += "</body></html>"
+                self.wfile.write(output.encode("utf-8"))
+                print(output)
+                return
+
             if self.path.endswith("/edit"):
                 restaurantId = self.path.split("/")[2]
                 restaurantName = session.query(Restaurant).filter_by(id = restaurantId).one().name
@@ -93,6 +109,18 @@ class webserverHandler(BaseHTTPRequestHandler):
 
                         self.wfile.write(output.encode('utf-8'))
                         print(output)
+
+                if self.path.endswith("/delete"):
+                    restaurantId = self.path.split("/")[2]
+                    restaurant = session.query(Restaurant).filter_by(id = restaurantId).one()
+                    session.delete(restaurant)
+                    session.commit()
+                    self.send_response(301)
+                    self.send_header('Content-type', 'text/html')
+                    self.send_header('Location', '/restaurants')
+                    self.end_headers()
+                    self.wfile.write(output.encode('utf-8'))
+                    print(output)
 
                 if self.path.endswith("/edit"):
                     ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
