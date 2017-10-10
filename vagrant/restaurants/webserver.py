@@ -1,6 +1,15 @@
 #Web server code using https://docs.python.org/2/library/basehttpserver.html
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from database_setup import Base, Restaurant, MenuItem
+
+engine = create_engine('sqlite:///restaurantmenu.db')
+Base.metadata.bind = engine
+DBSession = sessionmaker(bind = engine)
+session = DBSession()
+
 import cgi
 
 #Will process reauest from http://localhost:8080/hello
@@ -15,6 +24,24 @@ class webserverHandler(BaseHTTPRequestHandler):
                 output += "<html><body>"
                 output += "<h1>Hello!</h1>"
                 output += '''<form method='POST' enctype='multipart/form-data' action='/hello'><h2>What would you like me to say?</h2><input name="message" type="text" ><input type="submit" value="Submit"> </form>'''
+                output += "</body></html>"
+                self.wfile.write(output.encode("utf-8"))
+                print(output)
+                return
+
+            if self.path.endswith("/restaurants"):
+                self.send_response(200)
+                self.send_header('Content-type', 'text/html', )
+                self.end_headers()
+                output = ""
+                output += "<html><body>"
+                restaurants = session.query(Restaurant).all()
+                for restaurant in restaurants:
+                    output += "<div>"
+                    output += "<h2>"
+                    output += restaurant.name
+                    output += "</h2>"
+                    output += "</div>"
                 output += "</body></html>"
                 self.wfile.write(output.encode("utf-8"))
                 print(output)
