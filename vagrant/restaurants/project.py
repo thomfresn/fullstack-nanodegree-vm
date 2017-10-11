@@ -1,5 +1,5 @@
 #import Flask module
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 
 #import SQLAlchemy module
 from sqlalchemy import create_engine
@@ -29,13 +29,18 @@ def restaurantMenuRoot(restaurant_id):
 
     return output
 
-
 @app.route('/restaurants/<int:restaurant_id>/')
 def restaurantMenu(restaurant_id):
     restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
     items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
-    output = ''
     return render_template('menu.html', restaurant=restaurant, items = items)
+
+#Making an API endpoint (GET request)
+@app.route('/restaurants/<int:restaurant_id>/menu/JSON')
+def restaurantMenuJSON(restaurant_id):
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
+    return jsonify(MenuItems=[i.serialize for i in items])
 
 
 @app.route('/restaurants/<int:restaurant_id>/new', methods=['GET', 'POST'])
@@ -75,6 +80,7 @@ def deleteMenuItem(restaurant_id, menu_id):
         return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
         return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
+
 
 if __name__ == '__main__':
     app.secret_key = "super_secret_key"
