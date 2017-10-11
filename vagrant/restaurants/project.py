@@ -13,38 +13,82 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
 session = DBSession()
 
-#decorator
 @app.route('/')
+def restaurantMenuRoot(restaurant_id):
+    restaurant = session.query(Restaurant).first()
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant.id)
+    output = ''
+    for i in items:
+        output += i.name
+        output += '</br>'
+        output += i.price
+        output += '</br>'
+        output += i.description
+        output += '</br>'
+        output += '</br>'
+
+    return output
+
+
 @app.route('/restaurants/<int:restaurant_id>/')
 def restaurantMenu(restaurant_id):
-    restaurant = session.query(Restaurant).filter_by(id = restaurant_id).one()
-    items = session.query(MenuItem).filter_by(restaurant_id = restaurant_id)
-    return render_template('menu.html', restaurant = restaurant, items = items)
+    restaurant = session.query(Restaurant).filter_by(id=restaurant_id).one()
+    items = session.query(MenuItem).filter_by(restaurant_id=restaurant_id)
+    output = ''
+    for menu in items:
+        output += "<div>"
+        output += menu.name
+        output += "<br>"
+        output += "<a href='/restaurants/%s/%s/edit'>" % (restaurant.id, menu.id)
+        output += "Edit menu"
+        output += "</a>"
+        output += "<br>"
+        output += "<a href='/restaurants/%s/%s/delete'>" % (restaurant.id, menu.id)
+        output += "Delete menu"
+        output += "</a>"
+        output += "<br>"
+        output += "</div>"
+        output += "</body></html>"
 
-# Task 1: Create route for newMenuItem function here
+    return output
+
+
 @app.route('/restaurants/<int:restaurant_id>/new', methods=['GET', 'POST'])
 def newMenuItem(restaurant_id):
+
     if request.method == 'POST':
-        newMenuItemName = request.form['name']
-        newMenuItem = MenuItem(name = newMenuItemName,restaurant_id = restaurant_id)
-        session.add(newMenuItem)
+        newItem = MenuItem(name=request.form['name'], description=request.form[
+                           'description'], price=request.form['price'], course=request.form['course'], restaurant_id=restaurant_id)
+        session.add(newItem)
         session.commit()
-        return redirect(url_for('restaurantMenu', restaurant_id = restaurant_id))
+        return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
     else:
-        return render_template('newmenuitem.html', restaurant_id = restaurant_id)
+        return render_template('newmenuitem.html', restaurant_id=restaurant_id)
 
-# Task 2: Create route for editMenuItem function here
-@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/edit/')
+
+@app.route('/restaurants/<int:restaurant_id>/<int:menu_id>/edit',methods=['GET', 'POST'])
 def editMenuItem(restaurant_id, menu_id):
-    return render_template('editmenuitem.html', restaurant_id = restaurant_id)
+    editedItem = session.query(MenuItem).filter_by(id=menu_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            editedItem.name = request.form['name']
+        session.add(editedItem)
+        session.commit()
+        return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+    else:
+        return render_template('editmenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=editedItem)
 
-# Task 3: Create a route for deleteMenuItem function here
-@app.route('/restaurant/<int:restaurant_id>/<int:menu_id>/delete/')
+
+@app.route('/restaurants/<int:restaurant_id>/<int:menu_id>/delete/',methods=['GET', 'POST'])
 def deleteMenuItem(restaurant_id, menu_id):
-    return render_template('deletemenuitem.html', restaurant_id = restaurant_id)
+    deletedItem = session.query(MenuItem).filter_by(id=menu_id).one()
+    if request.method == 'POST':
+        session.delete(deletedItem)
+        session.commit()
+        return redirect(url_for('restaurantMenu', restaurant_id=restaurant_id))
+    else:
+        return render_template('deletemenuitem.html', restaurant_id=restaurant_id, menu_id=menu_id, item=deletedItem)
 
-#prevent from running the application if file is imported as module
 if __name__ == '__main__':
-    #reload the server each time the code changes
     app.debug = True
-    app.run(host = '0.0.0.0', port = 5000)
+app.run(host='0.0.0.0', port=5000)
